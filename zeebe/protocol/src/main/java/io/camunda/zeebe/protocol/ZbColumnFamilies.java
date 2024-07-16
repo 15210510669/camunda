@@ -169,7 +169,12 @@ public enum ZbColumnFamilies implements EnumValue {
 
   USER_TASKS(79),
   USER_TASK_STATES(80),
-  COMPENSATION_SUBSCRIPTION(81);
+  COMPENSATION_SUBSCRIPTION(81),
+
+  USERS(82),
+
+  AUTHORIZATIONS(83),
+  AUTHORIZATIONS_BY_USERNAME_AND_PERMISSION(84);
 
   private final int value;
 

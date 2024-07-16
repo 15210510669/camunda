@@ -7,6 +7,8 @@
  */
 package io.camunda.zeebe.engine.state.appliers;
 
+import io.camunda.zeebe.engine.processing.identity.AuthorizationCreatedApplier;
+import io.camunda.zeebe.engine.processing.identity.UserCreatedApplier;
 import io.camunda.zeebe.engine.state.EventApplier;
 import io.camunda.zeebe.engine.state.EventApplier.NoSuchEventApplier.NoApplierForIntent;
 import io.camunda.zeebe.engine.state.EventApplier.NoSuchEventApplier.NoApplierForVersion;
@@ -15,6 +17,7 @@ import io.camunda.zeebe.engine.state.mutable.MutableProcessMessageSubscriptionSt
 import io.camunda.zeebe.engine.state.mutable.MutableProcessingState;
 import io.camunda.zeebe.protocol.impl.record.RecordMetadata;
 import io.camunda.zeebe.protocol.record.RecordValue;
+import io.camunda.zeebe.protocol.record.intent.AuthorizationIntent;
 import io.camunda.zeebe.protocol.record.intent.CommandDistributionIntent;
 import io.camunda.zeebe.protocol.record.intent.CompensationSubscriptionIntent;
 import io.camunda.zeebe.protocol.record.intent.DecisionEvaluationIntent;
@@ -44,6 +47,7 @@ import io.camunda.zeebe.protocol.record.intent.ResourceDeletionIntent;
 import io.camunda.zeebe.protocol.record.intent.SignalIntent;
 import io.camunda.zeebe.protocol.record.intent.SignalSubscriptionIntent;
 import io.camunda.zeebe.protocol.record.intent.TimerIntent;
+import io.camunda.zeebe.protocol.record.intent.UserIntent;
 import io.camunda.zeebe.protocol.record.intent.UserTaskIntent;
 import io.camunda.zeebe.protocol.record.intent.VariableDocumentIntent;
 import io.camunda.zeebe.protocol.record.intent.VariableIntent;
@@ -102,6 +106,8 @@ public final class EventAppliers implements EventApplier {
     registerCommandDistributionAppliers(state);
     registerEscalationAppliers();
     registerResourceDeletionAppliers();
+    registerUserAppliers(state);
+    registerAuthorizationAppliers(state);
     return this;
   }
 
@@ -351,6 +357,14 @@ public final class EventAppliers implements EventApplier {
     register(UserTaskIntent.UPDATING, new UserTaskUpdatingApplier(state));
     register(UserTaskIntent.UPDATED, new UserTaskUpdatedApplier(state));
     register(UserTaskIntent.MIGRATED, new UserTaskMigratedApplier(state));
+  }
+
+  private void registerUserAppliers(final MutableProcessingState state) {
+    register(UserIntent.CREATED, new UserCreatedApplier(state));
+  }
+
+  private void registerAuthorizationAppliers(final MutableProcessingState state) {
+    register(AuthorizationIntent.CREATED, new AuthorizationCreatedApplier(state));
   }
 
   private void registerCompensationSubscriptionApplier(

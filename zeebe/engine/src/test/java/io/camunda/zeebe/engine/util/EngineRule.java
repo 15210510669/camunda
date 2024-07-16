@@ -19,6 +19,7 @@ import io.camunda.zeebe.engine.state.DefaultZeebeDbFactory;
 import io.camunda.zeebe.engine.state.ProcessingDbState;
 import io.camunda.zeebe.engine.state.immutable.ProcessingState;
 import io.camunda.zeebe.engine.util.TestInterPartitionCommandSender.CommandInterceptor;
+import io.camunda.zeebe.engine.util.client.AuthorizationClient;
 import io.camunda.zeebe.engine.util.client.DecisionEvaluationClient;
 import io.camunda.zeebe.engine.util.client.DeploymentClient;
 import io.camunda.zeebe.engine.util.client.IncidentClient;
@@ -28,6 +29,7 @@ import io.camunda.zeebe.engine.util.client.ProcessInstanceClient;
 import io.camunda.zeebe.engine.util.client.PublishMessageClient;
 import io.camunda.zeebe.engine.util.client.ResourceDeletionClient;
 import io.camunda.zeebe.engine.util.client.SignalClient;
+import io.camunda.zeebe.engine.util.client.UserClient;
 import io.camunda.zeebe.engine.util.client.UserTaskClient;
 import io.camunda.zeebe.engine.util.client.VariableClient;
 import io.camunda.zeebe.logstreams.log.LoggedEvent;
@@ -267,6 +269,14 @@ public final class EngineRule extends ExternalResource {
 
   public long getLastProcessedPosition() {
     return lastProcessedPosition;
+  }
+
+  public UserClient user() {
+    return new UserClient(environmentRule);
+  }
+
+  public AuthorizationClient authorization() {
+    return new AuthorizationClient(environmentRule);
   }
 
   public DeploymentClient deployment() {
