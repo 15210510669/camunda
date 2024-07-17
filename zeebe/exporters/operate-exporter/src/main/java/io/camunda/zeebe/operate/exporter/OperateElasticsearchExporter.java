@@ -15,6 +15,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import io.camunda.operate.exceptions.PersistenceException;
 import io.camunda.operate.schema.indices.ProcessIndex;
+import io.camunda.operate.schema.templates.EventTemplate;
 import io.camunda.operate.schema.templates.FlowNodeInstanceTemplate;
 import io.camunda.operate.schema.templates.SequenceFlowTemplate;
 import io.camunda.operate.schema.templates.VariableTemplate;
@@ -23,10 +24,7 @@ import io.camunda.operate.util.ElasticsearchScriptBuilder;
 import io.camunda.zeebe.exporter.api.Exporter;
 import io.camunda.zeebe.exporter.api.context.Context;
 import io.camunda.zeebe.exporter.api.context.Controller;
-import io.camunda.zeebe.operate.exporter.handlers.FlowNodeInstanceProcessInstanceHandler;
-import io.camunda.zeebe.operate.exporter.handlers.ProcessHandler;
-import io.camunda.zeebe.operate.exporter.handlers.SequenceFlowHandler;
-import io.camunda.zeebe.operate.exporter.handlers.VariableHandler;
+import io.camunda.zeebe.operate.exporter.handlers.*;
 import io.camunda.zeebe.operate.exporter.util.XMLUtil;
 import io.camunda.zeebe.protocol.record.Record;
 import io.camunda.zeebe.protocol.record.RecordType;
@@ -49,13 +47,16 @@ public class OperateElasticsearchExporter implements Exporter {
   private long lastPosition = -1;
   private int batchSize;
 
+  // FIXME - must come from importStore.getConcurrencyMode()
+  private final boolean concurrencyMode = false;
+
   @Override
   public void configure(final Context context) {
     log = context.getLogger();
     configuration =
         context.getConfiguration().instantiate(OperateElasticsearchExporterConfiguration.class);
     batchSize =
-        configuration.bulk.size; // TODO this suplicated configuration.elasticsearch.batchSize
+        configuration.bulk.size; // TODO this duplicated configuration.elasticsearch.batchSize
     log.debug("Exporter configured with {}", configuration);
 
     validate(configuration);
@@ -164,6 +165,22 @@ public class OperateElasticsearchExporter implements Exporter {
             new FlowNodeInstanceProcessInstanceHandler(
                 (FlowNodeInstanceTemplate)
                     (new FlowNodeInstanceTemplate().setIndexPrefix(indexPrefix))))
+        .withHandler(
+            new FlowNodeInstanceIncidentHandler(
+                (FlowNodeInstanceTemplate)
+                    (new FlowNodeInstanceTemplate().setIndexPrefix(indexPrefix))))
+        .withHandler(
+            new EventFromIncidentHandler(
+                (EventTemplate) (new EventTemplate().setIndexPrefix(indexPrefix)), concurrencyMode))
+        .withHandler(
+            new EventFromJobHandler(
+                (EventTemplate) (new EventTemplate().setIndexPrefix(indexPrefix)), concurrencyMode))
+        .withHandler(
+            new EventFromProcessInstanceHandler(
+                (EventTemplate) (new EventTemplate().setIndexPrefix(indexPrefix)), concurrencyMode))
+        .withHandler(
+            new EventFromProcessMessageSubscriptionHandler(
+                (EventTemplate) (new EventTemplate().setIndexPrefix(indexPrefix)), concurrencyMode))
         .build();
   }
 
